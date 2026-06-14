@@ -124,9 +124,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleWindow.h" />
     <ClInclude Include="fft.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConsoleWindow.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

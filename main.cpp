@@ -1,26 +1,37 @@
 #include <iostream>
+#include <thread>
 #include "fft.hpp"
+#include "ConsoleWindow.h"
 
 
 
 int main()
 {
-	std::vector<int> P(8); // P = 1 + 2x + 3x^2 + 4x^3...
+	int N = 256;
+	std::vector<complex<double>> input_data(N);
 	int cnt = 0;
-	std::generate(P.begin(), P.end(),
-		[&cnt]() {return ++cnt; });
+	int T1 = 1, T2 = 128, T3 = 64;
+	while(1){
+		T1 += 2; T2--;T3 += 3;
+		std::generate(input_data.begin(), input_data.end(),
+			[&]() {
+				++cnt;
+				double val = 0.3*sin((T1%128) * cnt * 2 * pi / N + pi / 6)
+					+ cos((T2 % 128) * cnt * 2 * pi / N)
+					+ 0.7*cos((T3 % 128) * cnt * 2 * pi / N);
+				return std::complex<double>(val);
+			});
 
-	std::cout << "P(x) = "<< P[0];
-	for (int i = 1; i< P.size();++i)
-	{
-		std::cout << " + " << P[i] << "*x^" << i;
-	}
-	std::cout << '\n';
+		auto output_data = FFT(input_data);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		system("cls");
+		ConsoleWindow win;
+		std::cout << "\n\n ============ input ==============\n";
+		win.SetData(&input_data);
+		win.draw();
 
-	auto num = FFT(P);
-
-	for(auto x:num)
-	{
-		std::cout << x.real() << " + i(" << (x.imag()) << ")\n";
+		std::cout << "\n\n ============ FFT ==============\n";
+		win.SetData(&output_data);
+		win.draw();
 	}
 }
