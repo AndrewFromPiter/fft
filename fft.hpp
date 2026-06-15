@@ -30,6 +30,9 @@ std::vector<std::complex<double>> FFT(std::vector<std::complex<double>> P)
 	if (n == 1)
 		return P; //выход из рекурсии когда полином константа
 
+	if ((int)log2(n) - log2(n) != 0)
+		throw std::exception("size input to fft != 2^n");
+
 	complex w = std::polar(1.0, 2 * pi / (double)n);
 
 	vector<complex<double>> Pe(n / 2), Po(n / 2);
