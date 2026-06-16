@@ -3,10 +3,17 @@ project(fft_project)
 
 set(CMAKE_CXX_STANDARD 20)
 
-file(GLOB SOURCES CONFIGURE_DEPENDS
-    "src/*.cpp"
-)
+# Собираем все .cpp файлы
+file(GLOB SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
-add_executable(fft ${SOURCES})
+add_executable(fft ${SOURCES} "include/GraficWindow.hpp")
 
 target_include_directories(fft PRIVATE include)
+
+find_package(glfw3 CONFIG REQUIRED)
+find_package(OpenGL REQUIRED)
+
+target_link_libraries(fft PRIVATE 
+    glfw
+    OpenGL::GL
+)
