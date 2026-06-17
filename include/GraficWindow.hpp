@@ -1,6 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <string>
+#include <map>
 #include "RingBuffer.hpp"
 
 template<typename el_type>
@@ -10,12 +11,12 @@ private:
 	GLFWwindow* window;
 	int width, height;
 	std::string winName;
-
-	RingBuffer<el_type>* RB = nullptr;
+	std::map<std::string, RingBuffer<el_type>*> data;
+	//RingBuffer<el_type>* RB = nullptr;
 
 	void draw_data()
 	{
-		if (RB == nullptr)
+		if (data.empty())
 		{
 			glBegin(GL_TRIANGLES);
 
@@ -33,35 +34,45 @@ private:
 			return;
 		}
 
-		auto data = RB->Try_get_latest();
-		if (data.empty())
-			return;
+		int num_pack = 0;
+		const int total_packs = data.size();
+		for (auto pack_data : data) {
+			auto package = pack_data.second->Try_get_latest();
+			if (package.empty())
+			{
+				++num_pack;
+				continue;
+			}
+			const int pack_size = package.size();
+			glBegin(GL_LINE_STRIP);
 
-		glBegin(GL_LINE_STRIP);
-		
-		glColor3f(0.0f, 1.0f, 1.0f);
-		
-		float max_el = abs(
-			*std::max_element(data.begin(), data.end(),
-				[](el_type& left, el_type& right)
-				{
-					return abs(left) < abs(right);
-				})
-		);
+			glColor3f(0.0f, 1.0f, 1.0f);
 
-		if (max_el == 0)
-			throw std::exception("max_el == 0");
+			float max_el = abs(
+				*std::max_element(package.begin(), package.end(),
+					[](el_type& left, el_type& right)
+					{
+						return abs(left) < abs(right);
+					})
+			);
 
-		float x_step = 2.0f / data.size();
-		for (size_t i = 0;i < data.size() / 2;++i)
-		{
-			float x = 1.8f * i * x_step - 0.9f;
-			float y = 1.8f * abs(data[i]) / max_el -0.9f;
+			if (max_el == 0)
+				throw std::exception("max_el == 0");
 
-			glVertex2f(x, y);
+			float x_step = 2.0f / pack_size;
+			float y_height = 2.0f / total_packs;
+			float y_offset = -1.0f + num_pack * y_height;
+			for (size_t i = 0;i < package.size() / 2;++i)
+			{
+				float x = 1.8f * i * x_step - 0.9f;
+				float y = (abs(package[i]) / max_el) * y_height + y_offset;
+
+				glVertex2f(x, y);
+			}
+
+			glEnd();
+			++num_pack;
 		}
-
-		glEnd();
 	};
 public:
 	GraficWindow(int w,int h,std::string name):
@@ -89,7 +100,7 @@ public:
 		glfwTerminate();
 	}
 
-	void SetData(RingBuffer<el_type>* arg) {	RB = arg;	};
+	void PushData(std::string key, RingBuffer<el_type>* arg) {	data[key] = arg;	};
 	
 	void Render()
 	{
