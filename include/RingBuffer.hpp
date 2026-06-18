@@ -11,30 +11,32 @@ class RingBuffer
 	std::vector<std::vector<el_type>> buffer;
 	const size_t capacity;
 	size_t writeIndex = 0;
-	std::mutex mtx;
+	std::vector < std::mutex> mtx;
 
 public:
 	RingBuffer(size_t cap, size_t N) :
 		capacity(cap),
-		buffer(cap, std::vector<el_type>(N))
+		buffer(cap, std::vector<el_type>(N)),
+		mtx(cap)
 	{
 	};
 	
 	void push(const std::vector<el_type>& data)
 	{
-		std::lock_guard<std::mutex> lg();
 		size_t index = writeIndex % capacity;
+		//std::lock_guard<std::mutex> lg((mtx[index]));
 		buffer[index] = data;
 		++writeIndex;
 	}
 
 	std::vector<el_type> Try_get_latest() const
 	{
-		std::lock_guard<std::mutex> lg();
 		if (writeIndex == 0)
 			return {};
 
 		size_t index = (writeIndex - 1) % capacity;
+
+		//std::lock_guard<std::mutex> lg(&mtx[index]);
 		return buffer.at(index);
 	}
 };

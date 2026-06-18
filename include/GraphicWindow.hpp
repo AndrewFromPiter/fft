@@ -1,17 +1,16 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <string>
-#include <map>
 #include "RingBuffer.hpp"
 
 template<typename el_type>
-class GraficWindow
+class GraphicWindow
 {
 private:
 	GLFWwindow* window;
 	int width, height;
 	std::string winName;
-	std::map<std::string, RingBuffer<el_type>*> data;
+	std::vector<RingBuffer<el_type>*> data;
 	//RingBuffer<el_type>* RB = nullptr;
 
 	void draw_data()
@@ -37,7 +36,7 @@ private:
 		int num_pack = 0;
 		const int total_packs = data.size();
 		for (auto pack_data : data) {
-			auto package = pack_data.second->Try_get_latest();
+			auto package = pack_data->Try_get_latest();
 			if (package.empty())
 			{
 				++num_pack;
@@ -60,8 +59,8 @@ private:
 				throw std::exception("max_el == 0");
 
 			float x_step = 2.0f / pack_size;
-			float y_height = 2.0f / total_packs;
-			float y_offset = -1.0f + num_pack * y_height;
+			float y_height = 1.8f / total_packs;
+			float y_offset = -0.9f + num_pack * y_height;
 			for (size_t i = 0;i < package.size() / 2;++i)
 			{
 				float x = 1.8f * i * x_step - 0.9f;
@@ -75,9 +74,10 @@ private:
 		}
 	};
 public:
-	GraficWindow(int w,int h,std::string name):
-		width(w),height(h),
-		winName(name)
+	GraphicWindow(int w, int h, std::string name) :
+		width(w), height(h),
+		winName(name),
+		data()
 	{
 		if (!glfwInit())
 			throw std::exception("error glfwInit");
@@ -90,7 +90,7 @@ public:
 		glfwMakeContextCurrent(window);
 	};
 
-	~GraficWindow()
+	~GraphicWindow()
 	{
 		if (window)
 		{
@@ -100,9 +100,9 @@ public:
 		glfwTerminate();
 	}
 
-	void PushData(std::string key, RingBuffer<el_type>* arg) {	data[key] = arg;	};
+	void PushData(RingBuffer<el_type>* arg) {	data.push_back(arg);	};
 	
-	void Render()
+	void RenderLoop()
 	{
 		while (!glfwWindowShouldClose(window)) {
 			
