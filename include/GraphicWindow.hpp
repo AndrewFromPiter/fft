@@ -1,5 +1,6 @@
 #pragma once
 #include <GLFW/glfw3.h>
+#include <GL/freeglut.h>
 #include <string>
 #include "RingBuffer.hpp"
 
@@ -57,9 +58,9 @@ private:
 			glBegin(GL_LINE_STRIP);
 
 			glColor3f(0.0f, 1.0f, 1.0f);
-			
+
 			float max_el = gr_data.max;
-			if(gr_data.auto_scale){
+			if (gr_data.auto_scale) {
 				max_el = abs(
 					*std::max_element(package.begin(), package.end(),
 						[](el_type& left, el_type& right)
@@ -73,12 +74,12 @@ private:
 			if (max_el == 0)
 				throw std::exception("max_el == 0");
 
-			float x_step = gr_data.denum * 2.0f / pack_size;
+			float x_step = gr_data.denum * 1.8f / pack_size;
 			float y_height = 1.8f / total_packs;
 			float y_offset = -0.9f + num_pack * y_height;
-			for (size_t i = 0;i < package.size() / gr_data.denum ;++i)
+			for (size_t i = 0;i < package.size() / gr_data.denum;++i)
 			{
-				float x = 1.8f * i * x_step - 0.9f;
+				float x = i * x_step - 0.9f;
 
 				float val = abs(package[i]);
 				if (val > max_el)
@@ -90,6 +91,46 @@ private:
 			}
 
 			glEnd();
+
+			// === Добавляем шкалу X только для спектра (output) ===
+			if (num_pack == 0) {  // output
+				glColor3f(0.8f, 0.8f, 0.0f);
+
+				const float sample_rate = gr_data.divVal;           // должно быть 48000
+				const int n_points = pack_size / gr_data.denum;     // обычно 2048
+				const float freq_per_bin = sample_rate / pack_size; // важно! (48000 / 4096)
+
+				float max_freq = sample_rate / gr_data.denum;
+
+				// Рисуем метки каждые ~5000 Гц
+				for (int k = 0; k <= 32; ++k) {
+					float freq = k * (int)max_freq / 32;
+					int i = (int)(freq / freq_per_bin + 0.5f);   // ближайшая бина
+					if (i >= n_points) break;
+
+					float x = -0.9f + i * x_step;   // используй тот же x_step, что и выше
+
+					// Короткая засечка (не на всю высоту!)
+					glBegin(GL_LINES);
+					glVertex2f(x, y_offset - 0.02f);           // чуть ниже графика
+					glVertex2f(x, y_offset + 0.02f);           // короткая вверх
+					glEnd();
+
+					// Текст частоты
+					glRasterPos2f(x - 0.015f, y_offset - 0.1f);
+					std::string label = std::to_string((int)freq);
+					for (char c : label) {
+						glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+					}
+				}
+
+				// Подпись "Frequency (Hz)" под осью
+				glRasterPos2f(0.3f, y_offset - 0.28f);
+				const char* axis = "Frequency (Hz)";
+				for (char c : std::string(axis)) {
+					glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, c);
+				}
+			}
 			++num_pack;
 		}
 	};
@@ -108,6 +149,11 @@ public:
 			throw std::exception("error glfwCreateWindow");
 		}
 		glfwMakeContextCurrent(window);
+
+		int argc = 1;
+		char* argv[1] = { (char*)"fft" };
+		glutInit(&argc, argv);
+		glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	};
 
 	~GraphicWindow()

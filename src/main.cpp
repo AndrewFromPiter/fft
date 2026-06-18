@@ -5,7 +5,7 @@
 #include "RingBuffer.hpp"
 #include "AudioReader.h"
 
-const int Samples_In_Package = 4096;
+const int Samples_In_Package = pow(2,11);
 const int Sample_Rate = 48000;
 
 int main()
@@ -16,10 +16,10 @@ int main()
 	std::jthread Graphic([&output_data,&input_data]()
 		{
 			try {
-				GraphicWindow<std::complex<double>> GWin(1920, 1080, "FFT");
+				GraphicWindow<std::complex<double>> GWin(1240, 720, "FFT");
 
-				graphicData out{ &output_data , "output", Sample_Rate , 2, false , 1000.0f};
-				graphicData input{ &input_data , "input", Sample_Rate , 1 , false , 1.5f };
+				graphicData out{ &output_data , "output", Sample_Rate , 32, false , 250.0f};
+				graphicData input{ &input_data , "input", Sample_Rate , 1 , false , 0.6f };
 
 				GWin.PushData(out);
 				GWin.PushData(input);

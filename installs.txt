@@ -1,1 +1,1 @@
-vcpkg install glfw3 portaudio
+vcpkg install glfw3 portaudio freeglut
