@@ -57,7 +57,7 @@ void AudioReader::ReadLoop()
 {
     if (output == nullptr) return;
 
-    std::vector<int> tempBuffer(Samples_In_Package * NUM_CHANNELS);
+    std::vector<float> tempBuffer(Samples_In_Package * NUM_CHANNELS);
     std::vector<std::complex<double>> compBuffer(Samples_In_Package * NUM_CHANNELS);
     while (1) {
         Pa_ReadStream(stream, tempBuffer.data(), Samples_In_Package);

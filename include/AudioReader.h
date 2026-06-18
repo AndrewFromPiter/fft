@@ -4,7 +4,7 @@
 #include "RingBuffer.hpp"
 
 #define NUM_CHANNELS (1)          // моно
-#define SAMPLE_FORMAT  paInt32    
+#define SAMPLE_FORMAT  paFloat32    
 
 class AudioReader
 {

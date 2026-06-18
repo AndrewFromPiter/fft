@@ -1,13 +1,12 @@
 #include <iostream>
 #include <thread>
 #include "fft.hpp"
-#include "ConsoleWindow.h"
 #include "GraphicWindow.hpp"
 #include "RingBuffer.hpp"
 #include "AudioReader.h"
 
-const int Samples_In_Package = 1024;
-const int Sample_Rate = 44100;
+const int Samples_In_Package = 4096;
+const int Sample_Rate = 48000;
 
 int main()
 {
@@ -18,8 +17,12 @@ int main()
 		{
 			try {
 				GraphicWindow<std::complex<double>> GWin(1920, 1080, "FFT");
-				GWin.PushData(&output_data);
-				GWin.PushData(&input_data);
+
+				graphicData out{ &output_data , "output", Sample_Rate , 2, false , 1000.0f};
+				graphicData input{ &input_data , "input", Sample_Rate , 1 , false , 1.5f };
+
+				GWin.PushData(out);
+				GWin.PushData(input);
 				GWin.RenderLoop();
 			}
 			catch (std::exception exc) {
@@ -41,41 +44,16 @@ int main()
 			}
 		}
 	);
-	
-	/*int cnt = 0;
-	int T1 = 1, T2 = Samples_In_Package, T3 = Samples_In_Package/2;*/
-	while(1){
-		/*std::vector<complex<double>> package(Samples_In_Package);
-		T1 += 2; T2--;T3 += 3;
-		std::generate(package.begin(), package.end(),
-			[&]() {
-				++cnt;
-				double val = 0.3*sin((T1%Samples_In_Package) * cnt * 2 * pi / Samples_In_Package + pi / 6)
-					+ cos((T2 % Samples_In_Package) * cnt * 2 * pi / Samples_In_Package)
-					+ 0.7*cos((T3 % Samples_In_Package) * cnt * 2 * pi / Samples_In_Package);
-				return std::complex<double>(val);
-			});
-		input_data.push(package);*/
-
-		auto data = input_data.Try_get_latest();
-
-		if (!data.empty())
+	std::jthread Render([&output_data, &input_data]()
 		{
-			output_data.push(FFT(data));
+			while (1) {
+				auto data = input_data.Try_get_latest();
+
+				if (!data.empty())
+				{
+					output_data.push(FFT(data));
+				}
+			}
 		}
-
-
-		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-		/*system("cls");
-
-		ConsoleWindow win;
-		std::cout << "\n\n ============ FFT ==============\n";
-		win.draw(output_data.Try_get_latest());
-
-		std::cout << "\n\n ============ input ==============\n";
-		win.draw(input_data.Try_get_latest());*/
-
-		
-	}
+	);
 }
